@@ -1,93 +1,252 @@
-import streamlit as st # cd dashboard
-import pandas as pd    #python -m streamlit run home.py
+import streamlit as st
+import pandas as pd
 import seaborn as sns
 import plotly.express as px
-st.title("Explore the insight here")
-
-#DATASET PREVIEW
-df=sns.load_dataset("Car_crashes")
 
 
+# --------------------------------------------------
+# PAGE TITLE
+# --------------------------------------------------
 
-#FILTER CONNECTIVITY
-df['State']=df['abbrev']
+st.title("Explore the Insights Here")
 
-#Side bar
+
+# --------------------------------------------------
+# LOAD DATASET
+# --------------------------------------------------
+
+df = sns.load_dataset("car_crashes")
+
+
+# --------------------------------------------------
+# CREATE STATE COLUMN
+# --------------------------------------------------
+
+df["State"] = df["abbrev"]
+
+
+# --------------------------------------------------
+# SIDEBAR FILTER
+# --------------------------------------------------
+
 st.sidebar.title("Dashboard Filters")
-selected_state=st.sidebar.multiselect(
-    'Select State',
-    options=df['State'],
-    default=df['State']
+
+selected_state = st.sidebar.multiselect(
+    "Select State",
+    options=df["State"].unique(),
+    default=df["State"].unique()
 )
-filtered_df=df[df['State'].isin(selected_state)]
 
 
-#KPI Cards
-col1,col2,col3=st.columns(3)
+# --------------------------------------------------
+# FILTER DATA
+# --------------------------------------------------
+
+filtered_df = df[df["State"].isin(selected_state)]
+
+
+# --------------------------------------------------
+# KPI CARDS
+# --------------------------------------------------
+
+col1, col2, col3 = st.columns(3)
 
 col1.metric(
-    'Average accidents %',
-    round(filtered_df['total'].mean()),'%'
+    "Average Accidents %",
+    f"{filtered_df['total'].mean():.2f}%"
 )
 
 col2.metric(
-    'Average speeding %',
-    round(filtered_df['speeding'].mean()),'%'
+    "Average Speeding %",
+    f"{filtered_df['speeding'].mean():.2f}%"
 )
 
 col3.metric(
-    'Average alcoholic %',
-    round(filtered_df['alcohol'].mean()),'%'
+    "Average Alcoholic %",
+    f"{filtered_df['alcohol'].mean():.2f}%"
 )
-st.dataframe(filtered_df)
 
 
-#GRAPH CONNECTIVITY
-#total accident by state
-figbar=px.bar(filtered_df, x='abbrev', y='total',
-               title='State wise total accidents',
-               labels={'abbrev':'State','total':'Total State'},
-               color='total',template='plotly_dark')
-st.plotly_chart(figbar)
+# --------------------------------------------------
+# DATASET PREVIEW
+# --------------------------------------------------
 
-figbars=px.bar(filtered_df, x='abbrev', y='total',
-               title='State wise total accidents',
-               labels={'abbrev':'State','total':'Total State'},
-               color='abbrev')
-st.plotly_chart(figbars)
+st.subheader("Filtered Data")
 
-#row3
-col1,col2=st.columns(2)
+st.dataframe(
+    filtered_df,
+    use_container_width=True
+)
+
+
+# --------------------------------------------------
+# GRAPH 1 - TOTAL ACCIDENTS BY STATE
+# --------------------------------------------------
+
+figbar = px.bar(
+    filtered_df,
+    x="abbrev",
+    y="total",
+    title="State-wise Total Accidents",
+    labels={
+        "abbrev": "State",
+        "total": "Total Accidents"
+    },
+    color="total",
+    template="plotly_dark"
+)
+
+st.plotly_chart(
+    figbar,
+    use_container_width=True
+)
+
+
+# --------------------------------------------------
+# GRAPH 2 - STATE-WISE ACCIDENTS
+# --------------------------------------------------
+
+figbars = px.bar(
+    filtered_df,
+    x="abbrev",
+    y="total",
+    title="State-wise Accident Comparison",
+    labels={
+        "abbrev": "State",
+        "total": "Total Accidents"
+    },
+    color="abbrev"
+)
+
+st.plotly_chart(
+    figbars,
+    use_container_width=True
+)
+
+
+# --------------------------------------------------
+# ROW 3 - LINE CHART + PIE CHART
+# --------------------------------------------------
+
+col1, col2 = st.columns(2)
+
+
+# LINE CHART
 with col1:
-    figs=figs=px.line(filtered_df,x='abbrev',y='total',
-             title ='Statewise total accidents',
-             labels={'abbrev':'State','total':'Total State'},
-             template='plotly_dark',color_discrete_sequence=px.colors.sequential.Burg)
-    st.plotly_chart(figs)    
 
+    figs = px.line(
+        filtered_df,
+        x="abbrev",
+        y="total",
+        title="State-wise Total Accidents",
+        labels={
+            "abbrev": "State",
+            "total": "Total Accidents"
+        },
+        template="plotly_dark",
+        color_discrete_sequence=px.colors.sequential.Burg
+    )
+
+    st.plotly_chart(
+        figs,
+        use_container_width=True
+    )
+
+
+# PIE CHART
 with col2:
-    figpie=figpie=px.pie(filtered_df,values='speeding',
-                          names='abbrev')
-    st.plotly_chart(figpie)
+
+    figpie_small = px.pie(
+        filtered_df,
+        values="speeding",
+        names="abbrev",
+        title="Speeding Accidents by State"
+    )
+
+    st.plotly_chart(
+        figpie_small,
+        use_container_width=True
+    )
 
 
-figpie=px.pie(filtered_df,values='speeding',names='abbrev',
-               title='speeding accidents',
-               template='plotly_dark',
-               color_discrete_sequence=px.colors.sequential.algae_r,
-               height=600,width=600)
-figpie.update_traces(textposition='inside')
-st.plotly_chart(figpie) 
+# --------------------------------------------------
+# GRAPH 4 - SPEEDING ACCIDENTS PIE CHART
+# --------------------------------------------------
+
+figpie = px.pie(
+    filtered_df,
+    values="speeding",
+    names="abbrev",
+    title="Speeding Accidents",
+    template="plotly_dark",
+    color_discrete_sequence=px.colors.sequential.algae_r,
+    height=600,
+    width=600
+)
+
+figpie.update_traces(
+    textposition="inside"
+)
+
+st.plotly_chart(
+    figpie,
+    use_container_width=True
+)
 
 
-top10=df.sort_values('ins_premium',ascending=False).head(10)   
-bar=px.bar(top10,x='abbrev',y='ins_premium',
-           title='Ins premium',color='abbrev',template='plotly_dark')
-st.plotly_chart(bar)
+# --------------------------------------------------
+# TOP 10 STATES BY INSURANCE PREMIUM
+# --------------------------------------------------
+
+top10 = (
+    filtered_df
+    .sort_values(
+        "ins_premium",
+        ascending=False
+    )
+    .head(10)
+)
 
 
+bar = px.bar(
+    top10,
+    x="abbrev",
+    y="ins_premium",
+    title="Top 10 States by Insurance Premium",
+    labels={
+        "abbrev": "State",
+        "ins_premium": "Insurance Premium"
+    },
+    color="abbrev",
+    template="plotly_dark"
+)
 
-scatter=px.scatter(filtered_df,x='speeding',y='alcohol',
-                    color='speeding',size='total',
-                    template='plotly_dark')
-st.plotly_chart(scatter)                                      
+st.plotly_chart(
+    bar,
+    use_container_width=True
+)
+
+
+# --------------------------------------------------
+# SCATTER PLOT - SPEEDING VS ALCOHOL
+# --------------------------------------------------
+
+scatter = px.scatter(
+    filtered_df,
+    x="speeding",
+    y="alcohol",
+    color="speeding",
+    size="total",
+    title="Relationship Between Speeding and Alcohol",
+    labels={
+        "speeding": "Speeding %",
+        "alcohol": "Alcohol %",
+        "total": "Total Accidents"
+    },
+    template="plotly_dark"
+)
+
+st.plotly_chart(
+    scatter,
+    use_container_width=True
+)
